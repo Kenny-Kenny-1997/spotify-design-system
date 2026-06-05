@@ -10,6 +10,7 @@ interface MusicCardProps {
   subtitle: string;
   imageUrl: string;
   tracks?: Track[];
+  playlist?: Playlist;
   onClick?: () => void;
   size?: "sm" | "md" | "lg";
   rounded?: boolean;
@@ -21,6 +22,7 @@ export default function MusicCard({
   subtitle,
   imageUrl,
   tracks = [],
+  playlist,
   onClick,
   size = "md",
   rounded = false,
@@ -29,25 +31,22 @@ export default function MusicCard({
   const { state, play, togglePlayPause } = usePlayerContext();
   const [hovered, setHovered] = useState(false);
 
-  const isCurrentPlaylist = tracks.length > 0 && state.currentTrack && tracks.some(t => t.id === state.currentTrack?.id);
+  const queueTracks = playlist ? playlist.tracks : tracks;
+  const isCurrentPlaylist = queueTracks.length > 0 && state.currentTrack &&
+    queueTracks.some(t => t.id === state.currentTrack?.id);
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isCurrentPlaylist) {
       togglePlayPause();
-    } else if (tracks.length > 0) {
-      play(tracks[0], tracks);
+    } else if (queueTracks.length > 0) {
+      play(queueTracks[0], queueTracks);
     }
   };
 
-  const imgSize = { sm: "w-full aspect-square", md: "w-full aspect-square", lg: "w-full aspect-square" }[size];
-
   return (
     <div
-      className={cn(
-        "card-interactive group cursor-pointer select-none",
-        "animate-fade-in"
-      )}
+      className={cn("card-interactive group cursor-pointer select-none animate-fade-in")}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -59,31 +58,25 @@ export default function MusicCard({
             src={imageUrl}
             alt={title}
             className={cn(
-              imgSize,
-              "object-cover transition-all duration-500",
+              "w-full aspect-square object-cover transition-all duration-500",
               hovered && "scale-105"
             )}
             loading="lazy"
           />
-          {/* Playing indicator */}
           {isCurrentPlaylist && state.isPlaying && (
             <div className="absolute bottom-3 left-3 flex items-end gap-[2px] h-4">
               {[...Array(4)].map((_, i) => (
                 <div
                   key={i}
                   className="equalizer-bar"
-                  style={{
-                    height: `${[60, 100, 40, 80][i]}%`,
-                    animationDelay: `${i * 0.15}s`,
-                  }}
+                  style={{ height: `${[60, 100, 40, 80][i]}%`, animationDelay: `${i * 0.15}s` }}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Play button overlay */}
-        {tracks.length > 0 && (
+        {queueTracks.length > 0 && (
           <button
             onClick={handlePlay}
             className={cn(
@@ -93,7 +86,6 @@ export default function MusicCard({
               hovered ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
               "hover:scale-105 hover:bg-spotify-green-light active:scale-95"
             )}
-            style={{ transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)" }}
           >
             {isCurrentPlaylist && state.isPlaying ? (
               <PauseIcon className="w-4 h-4 text-black" />
@@ -103,7 +95,6 @@ export default function MusicCard({
           </button>
         )}
 
-        {/* Badge */}
         {badge && (
           <div className="absolute top-2 left-2 badge-new text-xs px-2 py-0.5 rounded-full font-bold">
             {badge}
@@ -120,7 +111,6 @@ export default function MusicCard({
   );
 }
 
-// Icons
 const PlayIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
 );

@@ -1,24 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
-import { cn } from "@/lib/utils";
-import { PLAYLISTS, ARTISTS, TRACKS } from "@/lib/data";
+import { PLAYLISTS, ARTISTS, TRACKS, formatFollowers } from "@/lib/data";
 import MusicCard from "@/components/ui/MusicCard";
 import { usePlayerContext } from "@/lib/player-context";
 
 const GENRES = [
-  { name: "Pop", color: "#E61E32", bg: "#E61E32" },
-  { name: "Hip-Hop", color: "#BA5D07", bg: "#BA5D07" },
-  { name: "R&B", color: "#1E3264", bg: "#1E3264" },
-  { name: "Latin", color: "#E8115B", bg: "#E8115B" },
-  { name: "Rock", color: "#8D67AB", bg: "#8D67AB" },
-  { name: "Dance/Electronic", color: "#0D73EC", bg: "#0D73EC" },
-  { name: "Podcasts", color: "#148A08", bg: "#148A08" },
-  { name: "Mood", color: "#E91429", bg: "#E91429" },
-  { name: "Jazz", color: "#1E3264", bg: "#1E3264" },
-  { name: "Metal", color: "#503750", bg: "#503750" },
-  { name: "Indie", color: "#E61E32", bg: "#E61E32" },
-  { name: "Classical", color: "#BA5D07", bg: "#BA5D07" },
+  { name: "Pop", bg: "#E61E32" },
+  { name: "Hip-Hop", bg: "#BA5D07" },
+  { name: "R&B", bg: "#1E3264" },
+  { name: "Latin", bg: "#E8115B" },
+  { name: "Rock", bg: "#8D67AB" },
+  { name: "Dance/Electronic", bg: "#0D73EC" },
+  { name: "Podcasts", bg: "#148A08" },
+  { name: "Mood", bg: "#E91429" },
+  { name: "Jazz", bg: "#1E3264" },
+  { name: "Metal", bg: "#503750" },
+  { name: "Indie", bg: "#E61E32" },
+  { name: "Classical", bg: "#BA5D07" },
 ];
 
 export default function SearchView() {
@@ -30,6 +29,14 @@ export default function SearchView() {
         t.title.toLowerCase().includes(query.toLowerCase()) ||
         t.artist.toLowerCase().includes(query.toLowerCase())
       )
+    : [];
+
+  const filteredPlaylists = query.length > 1
+    ? PLAYLISTS.filter(p => p.name.toLowerCase().includes(query.toLowerCase()))
+    : [];
+
+  const filteredArtists = query.length > 1
+    ? ARTISTS.filter(a => a.name.toLowerCase().includes(query.toLowerCase()))
     : [];
 
   return (
@@ -62,16 +69,17 @@ export default function SearchView() {
 
       {/* Search Results */}
       {query.length > 1 ? (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-8 animate-fade-in">
+          {/* Tracks */}
           {filteredTracks.length > 0 && (
             <section>
               <h2 className="text-display-sm font-bold mb-4">Songs</h2>
               <div className="space-y-1">
-                {filteredTracks.map((track, i) => (
+                {filteredTracks.map((track) => (
                   <div
                     key={track.id}
                     onClick={() => play(track, filteredTracks)}
-                    className="flex items-center gap-4 p-3 rounded-md hover:bg-[var(--color-surface-hover)] cursor-pointer group"
+                    className="flex items-center gap-4 p-3 rounded-md hover:bg-[var(--color-surface-hover)] cursor-pointer"
                   >
                     <img src={track.coverUrl} alt="" className="w-10 h-10 rounded object-cover" />
                     <div>
@@ -83,9 +91,46 @@ export default function SearchView() {
               </div>
             </section>
           )}
-          {filteredTracks.length === 0 && (
+
+          {/* Artists */}
+          {filteredArtists.length > 0 && (
+            <section>
+              <h2 className="text-display-sm font-bold mb-4">Artists</h2>
+              <div className="grid grid-cols-cards-sm gap-4">
+                {filteredArtists.map(artist => (
+                  <MusicCard
+                    key={artist.id}
+                    title={artist.name}
+                    subtitle={formatFollowers(artist.monthlyListeners) + " monthly listeners"}
+                    imageUrl={artist.imageUrl}
+                    rounded
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Playlists */}
+          {filteredPlaylists.length > 0 && (
+            <section>
+              <h2 className="text-display-sm font-bold mb-4">Playlists</h2>
+              <div className="grid grid-cols-cards-sm gap-4">
+                {filteredPlaylists.map(pl => (
+                  <MusicCard
+                    key={pl.id}
+                    title={pl.name}
+                    subtitle={pl.description || "Playlist"}
+                    imageUrl={pl.coverUrl}
+                    tracks={pl.tracks}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {filteredTracks.length === 0 && filteredArtists.length === 0 && filteredPlaylists.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-[var(--color-text-subdued)] text-body-lg">No results found for "{query}"</p>
+              <p className="text-[var(--color-text-subdued)] text-body-lg">No results found for &quot;{query}&quot;</p>
               <p className="text-[var(--color-text-subdued)] text-body-sm mt-2">Check your spelling or try different keywords.</p>
             </div>
           )}
@@ -103,12 +148,9 @@ export default function SearchView() {
               >
                 <span className="font-bold text-white text-body-md leading-tight">{genre.name}</span>
                 <div
-                  className="absolute -bottom-3 -right-3 w-16 h-16 rounded-lg rotate-25 shadow-md
-                    opacity-80 group-hover:scale-110 transition-transform duration-300"
-                  style={{
-                    background: "rgba(0,0,0,0.2)",
-                    transform: "rotate(25deg)",
-                  }}
+                  className="absolute -bottom-3 -right-3 w-16 h-16 rounded-lg opacity-80
+                    group-hover:scale-110 transition-transform duration-300"
+                  style={{ background: "rgba(0,0,0,0.2)", transform: "rotate(25deg)" }}
                 />
               </button>
             ))}
